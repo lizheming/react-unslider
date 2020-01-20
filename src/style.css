@@ -1,5 +1,5 @@
 /* base styles */
-.unslider {
+.unslider-container {
   overflow: auto;
   margin: 0;
   padding: 0;
@@ -48,14 +48,14 @@
   z-index: 10;
 } */
 
-.unslider li,.unslider ol,.unslider ul {
+.unslider-container li,.unslider-container ol,.unslider-container ul {
   list-style: none;
   margin: 0;
   padding: 0;
   border: none;
 }
 
-.unslider:hover .unslider-arrow {
+.unslider-container:hover .unslider-arrow {
   opacity: 1;
   transition: opacity .2s ease-in;
 }
@@ -82,7 +82,10 @@
 }
 
 /* dots styles */
-
+.unslider-nav {
+  position: absolute;
+  bottom: 0;
+}
 .unslider-nav ol {
   padding-top: 5px;
   list-style: none;

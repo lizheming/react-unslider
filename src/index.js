@@ -1,78 +1,80 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback, useRef} from 'react';
 import cls from 'classnames';
 
+import usePauseFunction from './helper';
 import Navs from './Navs';
 
 import './style.css';
 
-function animation(dur) {
-  var start = Date.now();
-  return function(cb) {
-    function frameAnimation() {
-      var now = Date.now();
-      var percent = Math.min( (now - start)/dur, 1);
-      cb(percent);
-      if(percent < 1) requestAnimationFrame(frameAnimation);
-    }
-    requestAnimationFrame(frameAnimation);
-  };
-}	
-
-function useSlider({active, max, infinite, speed}) {
-  const [index, setIndex] = useState(active);
-  const [offset, setOffset] = useState(() => getOffset(active));
-
-  function getOffset(index) {
-    if(!infinite) {
-      return (-100 * index);
-    }
-    return (-100 * (index + 1));
-  }
-  function navigator(nextIndex) {
-    // const delta = nextOffset - offset;
-    const delta = -100;
-    animation(speed)(p => setOffset(getOffset(index) + p*delta));
-    if(nextIndex === max) {
-      nextIndex = 0;
-    }
-    if(nextIndex === -1) {
-      nextIndex = max - 1;
-    }
-    setIndex(nextIndex);
-    setOffset(getOffset(nextIndex));
+function useActiveIndex(Slides, {onChange}) {
+  const defaultIndex = Slides.findIndex(slide => slide.defaultActive === true);
+  const activeIndex = Slides.findIndex(slide => slide.active === true);
+  let index = 0;
+  if(activeIndex !== -1) {
+    index = activeIndex;
+  } else if(defaultIndex !== -1) {
+    index = defaultIndex;
   }
 
-  return {
-    index, 
-    offset,
-    navigator,
-    prev() {
-      navigator(index - 1);
-    },
-    next() {
-      navigator(index + 1);
+  const [idx, setIdx] = useState(index);
+  return [idx, function(index) {
+    if(index >= Slides.length) {
+      index = 0;
+    } else if(index < 0) {
+      index = Slides.length - 1;
     }
-  };
+
+    typeof onChange === 'function' && onChange(index);
+    if(activeIndex !== -1) {
+      const activeIndex = Slides.findIndex(slide => slide.active === true);
+      setIdx(activeIndex);
+    } else {
+      setIdx(index);
+    }
+  }];
 }
+
 export default function Unslider(props) {
   const Slides = props.children.filter(child => child.type === Unslider.Item);
 
-  const {index, offset, prev, next} = useSlider({
-    active: 0, 
-    max: Slides.length,
-    infinite: props.infinite,
-    speed: props.speed
-  });
+  const wrapRef = useRef(null);
+  const animateRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useActiveIndex(Slides, props);
+  const prev = useCallback(() => setActive(activeIndex - 1), [activeIndex]);
+  const next = useCallback(() => setActive(activeIndex + 1), [activeIndex]);
+  const [autonext, {play, pause}] = usePauseFunction(next, false);
+  const offset = (props.infinite ? activeIndex + 1 : activeIndex) * -100;
+
+  function setActive(nextIndex) {
+    if (!Element.prototype.animate) {
+      return setActiveIndex(nextIndex);
+    }
+
+    if(animateRef.current && animateRef.current.playState !== 'finished') {
+      return;
+    }
+
+    const nextOffset = (props.infinite ? nextIndex + 1 : nextIndex) * -100;
+    animateRef.current = wrapRef.current.animate({
+      marginLeft: [offset + '%', nextOffset + '%']
+    }, {duration: props.speed, delay: 0, easing: props.easing});
+    animateRef.current.onfinish = () => setActiveIndex(nextIndex);
+  }
+
+  useEffect(() => {
+    if(typeof props.onChange === 'function') {
+      props.onChange(activeIndex);
+    }
+  }, []);
 
   useEffect(() => {
     if(!props.autoplay) {
       return;
     }
 
-    const id = setInterval(next, props.delay);
+    const id = setInterval(autonext, props.delay);
     return () => clearInterval(id);
-  }, [index, offset]);
-
+  }, [activeIndex, autonext]);
 
   useEffect(() => {
     function handler(e) {
@@ -87,32 +89,32 @@ export default function Unslider(props) {
     }
     document.addEventListener('keyup', handler);
     return () => document.removeEventListener('keyup', handler);
-  }, [index]);
+  }, [activeIndex]);
 
   if(!Slides.length) {
     return null;
   }
 
-  // const navs = Slides.map((slide, index) => 
-  //   ({
-  //     key: index, 
-  //     acitve: slide.props.active,
-  //     label: slide.props.label || (index + 1)
-  //   })
-  // );
-  // if(navs.findIndex(nav => nav.active) === -1) {
-  //   navs[0].active = true;
-  // }
-
   const boxSize = {width: props.width, height: props.height};
+  const wrapHorizontalStyle = {
+    width: (props.infinite ? Slides.length + 2 : Slides.length) + '00%',
+    marginLeft: offset + '%'
+  };
+  const wrapVerticalStyle = {
+    height: (props.infinite ? Slides.length + 2 : Slides.length) + '00%',
+    marginTop: offset + '%'
+  };
   return (
-    <div className={cls('unslider', props.className)} style={boxSize}>
+    <div 
+      className={cls('unslider-container', props.className)} 
+      style={boxSize}
+      onMouseEnter={() => props.autoplay && pause()}
+      onMouseLeave={() => props.autoplay && play()}  
+    >
       <div 
         className={cls('unslider-wrap', `unslider-${props.animation}`)}
-        style={{
-          width: (props.infinite ? Slides.length + 2 : Slides.length) + '00%',
-          marginLeft: offset + '%'
-        }}  
+        ref={wrapRef}
+        style={props.animation === 'vertical' ? wrapVerticalStyle : wrapHorizontalStyle}
       >
         {!props.infinite ? null : React.cloneElement(Slides[Slides.length - 1], {style: boxSize})}
         {React.Children.map(Slides, slide => 
@@ -121,28 +123,29 @@ export default function Unslider(props) {
         {!props.infinite ? null : React.cloneElement(Slides[0], {style: boxSize})}
       </div>
 
-      {/* <Navs className="unslider-nav">
-        {navs.map(nav => 
-          <Navs.Item 
-            active={nav.active}
-            key={nav.index} 
-            dataKey={nav.index}
-            onClick={() => {
-              //TODO
-              //setActiveIndex
-              //animate slide
-            }}  
-          >
-            {nav.label}
-          </Navs.Item>  
-        )}
-      </Navs> */}
-      {/* <Arrows className={_('arrows')}>
-        <Arrows.Prev onClick={() => {}}/>
-        <Arrows.Next onClick={() => {}}/>
-      </Arrows> */}
+      {!props.nav ? null : (
+        <Navs>
+          {Slides.map((slide, idx) => (
+            <Navs.Item 
+              key={idx} 
+              active={idx === activeIndex}
+              onClick={() => setActive(idx)}
+            >{slide.props.label}</Navs.Item>
+          ))}
+        </Navs>
+      )}
+
+      {!props.arrow ? null : (
+        <div className="unslider-arrows">
+          {!props.infinite && activeIndex === 0 ? null : (
+            <div className="unslider-arrow prev" onClick={prev}></div>
+          )}
+          {!props.infinite && activeIndex === Slides.length - 1 ? null : (
+            <div className="unslider-arrow next" onClick={next}></div>
+          )}
+        </div>
+      )}
     </div>
-    
   );
 }
 
@@ -153,85 +156,21 @@ Unslider.Item = function(props) {
 }
 
 Unslider.defaultProps = {
-  prefixCls: 'unslider',
   width: 300,
   height: 189,
   autoplay: false,
   loop: true,
   delay: 3000,
   speed: 750,
-  easing: 'swing', // [.42, 0, .58, 1],
+  easing: 'linear', // [.42, 0, .58, 1],
   keys: {
     prev: 37,
     next: 39
   },
   nav: true,
+  arrow: true,
   animation: 'horizontal',
-  animateHeight: false,
-  swipe: true,
-  swipeThreshold: 0.2
+  onChange(index) {
+    console.log(index);
+  }
 }
-
-
-// import PropTypes from 'prop-types';
-
-// const UnsliderPropTypes = {
-//   prefixCls: PropTypes.string,
-//   //  Should the slider move on its own or only when
-//   //  you interact with the nav/arrows?
-//   //  Only accepts boolean true/false.
-//   autoplay: PropTypes.bool,
-  
-//   // play slide from start again if it's end
-//   loop: PropTypes.bool,
-
-//   //  3 second delay between slides moving, pass
-//   //  as a number in milliseconds.
-//   delay: PropTypes.number,
-  
-//   //  Animation speed in millseconds
-//   speed: PropTypes.number,
-
-//   //  An easing string to use. If you're using Velocity, use a
-//   //  Velocity string otherwise you can use jQuery/jQ UI options.
-//   easing: PropTypes.oneOfType([PropTypes.string, PropTypes.array]),
-
-//   //  Does it support keyboard arrows?
-//   //  Can pass either true or false -
-//   //  or an object with the keycodes, like so:
-//   //  {
-//   //   prev: 37,
-//   //   next: 39
-//   // }
-//   //  You can call any internal method name
-//   //  before the keycode and it'll be called.
-//   keys: PropTypes.object({
-//     prev: PropTypes.number,
-//     next: PropTypes.number
-//   }),
-
-//   //  Do you want to generate clickable navigation
-//   //  to skip to each slide? Accepts boolean true/false or
-//   //  a callback function per item to generate.
-//   nav: PropTypes.bool,
-
-//   //  How should Unslider animate?
-//   //  It can do one of the following types:
-//   //  "fade": each slide fades in to each other
-//   //  "horizontal": each slide moves from left to right
-//   //  "vertical": each slide moves from top to bottom
-//   animation: PropTypes.oneOf(['horizontal', 'vertical', 'fade']),
-
-//   //  Do you want to animate the heights of each slide as
-//   //  it moves
-//   anmateHeight: PropTypes.bool,
-
-//   //  Have swipe support?
-//   //  You can set this here with a boolean and always use
-//   //  initSwipe/destroySwipe later on.
-//   swipe: PropTypes.bool,
-
-//   // Swipe threshold -
-//   // lower float for enabling short swipe
-//   swipeThreshold: PropTypes.number
-// };

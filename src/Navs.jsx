@@ -3,7 +3,7 @@ import cls from 'classnames';
 
 export default function Navs(props) {
   return (
-    <nav className={props.className}>
+    <nav className="unslider-nav">
       <ol>{props.children}</ol>
     </nav>
   )
@@ -11,7 +11,7 @@ export default function Navs(props) {
 
 Navs.Item = function(props) {
   props.className = cls(props.className, {
-    active: props.active
+    'unslider-active': props.active
   });
   
   return (
