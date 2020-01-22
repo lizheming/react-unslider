@@ -1,176 +1,219 @@
-import React, {useEffect, useState, useCallback, useRef} from 'react';
+import React from 'react';
 import cls from 'classnames';
 
-import usePauseFunction from './helper';
-import Navs from './Navs';
+import {calcOffsetByActive} from './helper';
+import Navs from './components/Navs';
+import Arrows from './components/Arrows';
+import Item from './components/Item';
 
 import './style.css';
 
-function useActiveIndex(Slides, {onChange}) {
-  const defaultIndex = Slides.findIndex(slide => slide.defaultActive === true);
-  const activeIndex = Slides.findIndex(slide => slide.active === true);
-  let index = 0;
-  if(activeIndex !== -1) {
-    index = activeIndex;
-  } else if(defaultIndex !== -1) {
-    index = defaultIndex;
+export default class Unslider extends React.Component {
+  static Item = Item;
+  static defaultProps = {
+    width: 300,
+    height: 189,
+    autoplay: false,
+    loop: true,
+    delay: 3000,
+    speed: 750,
+    easing: 'linear', // [.42, 0, .58, 1],
+    keys: {
+      prev: 37,
+      next: 39
+    },
+    nav: true,
+    arrow: true,
+    animation: 'horizontal',
+    onChange(index) {
+      console.log(index);
+    }
   }
 
-  const [idx, setIdx] = useState(index);
-  return [idx, function(index) {
-    if(index >= Slides.length) {
-      index = 0;
-    } else if(index < 0) {
-      index = Slides.length - 1;
-    }
-
-    typeof onChange === 'function' && onChange(index);
+  state = this.getInitialState()
+  getInitialState(props = this.props) {
+    const Slides = props.children.filter(child => child.type === Unslider.Item);
+    
+    const defaultIndex = Slides.findIndex(slide => slide.props.defaultActive === true);
+    const activeIndex = Slides.findIndex(slide => slide.props.active === true);
+    let index = 0;
     if(activeIndex !== -1) {
-      const activeIndex = Slides.findIndex(slide => slide.active === true);
-      setIdx(activeIndex);
-    } else {
-      setIdx(index);
-    }
-  }];
-}
-
-export default function Unslider(props) {
-  const Slides = props.children.filter(child => child.type === Unslider.Item);
-
-  const wrapRef = useRef(null);
-  const animateRef = useRef(null);
-  const [activeIndex, setActiveIndex] = useActiveIndex(Slides, props);
-  const prev = useCallback(() => setActive(activeIndex - 1), [activeIndex]);
-  const next = useCallback(() => setActive(activeIndex + 1), [activeIndex]);
-  const [autonext, {play, pause}] = usePauseFunction(next, false);
-  const offset = (props.infinite ? activeIndex + 1 : activeIndex) * -100;
-
-  function setActive(nextIndex) {
-    if (!Element.prototype.animate) {
-      return setActiveIndex(nextIndex);
+      index = activeIndex;
+    } else if(defaultIndex !== -1) {
+      index = defaultIndex;
     }
 
-    if(animateRef.current && animateRef.current.playState !== 'finished') {
-      return;
-    }
-
-    const nextOffset = (props.infinite ? nextIndex + 1 : nextIndex) * -100;
-    animateRef.current = wrapRef.current.animate({
-      marginLeft: [offset + '%', nextOffset + '%']
-    }, {duration: props.speed, delay: 0, easing: props.easing});
-    animateRef.current.onfinish = () => setActiveIndex(nextIndex);
+    return {Slides, activeIndex: index, dragOffset: 0};
   }
 
-  useEffect(() => {
-    if(typeof props.onChange === 'function') {
-      props.onChange(activeIndex);
+  componentDidMount() {
+    const {onChange, autoplay, delay} = this.props;
+    const {activeIndex} = this.state;
+    if(typeof onChange === 'function') {
+      onChange(activeIndex);
     }
-  }, []);
+    
+    if(autoplay) {
+      this.playAuto();
+    }
+  }
+  
+  componentWillUnmount() {
+    if(this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = undefined;
+    }
+  }
 
-  useEffect(() => {
-    if(!props.autoplay) {
+  pauseAuto() {
+    if(this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = undefined;
+    }
+  }
+
+  playAuto() {
+    if(this.intervalId) {
       return;
     }
 
-    const id = setInterval(autonext, props.delay);
-    return () => clearInterval(id);
-  }, [activeIndex, autonext]);
+    const {delay} = this.props;
+    this.intervalId = setInterval(() => {
+      const {activeIndex} = this.state;
+      this.setActiveIndex(activeIndex + 1);
+    }, delay);
+  }
 
-  useEffect(() => {
-    function handler(e) {
-      for(const key in props.keys) {
-        if(e.which !== props.keys[key]) {
-          continue;
-        }
+  setActiveIndex(nextIndex) {
+    const {Slides, activeIndex, dragOffset} = this.state;
+    if(activeIndex === nextIndex && dragOffset === 0) {
+      return;
+    }
 
-        if(key === 'prev') prev();
-        if(key === 'next') next();
+    const {loop, animation, speed, easing, onChange} = this.props;
+    let nextActiveIndex = nextIndex
+    if(loop) {
+      if(nextIndex < 0) {
+        nextActiveIndex = Slides.length - 1;
+      } else if(nextIndex >= Slides.length) {
+        nextActiveIndex = 0;
       }
+    } else {
+      nextActiveIndex = Math.max(0, Math.min(nextActiveIndex, Slides.length - 1));
     }
-    document.addEventListener('keyup', handler);
-    return () => document.removeEventListener('keyup', handler);
-  }, [activeIndex]);
 
-  if(!Slides.length) {
-    return null;
+    if(!Element.prototype.animate || !this.wrap) {
+      this.setState({activeIndex: nextActiveIndex, dragOffset: 0}, () => {
+        if(typeof onChange === 'function') {
+          onChange(this.state.activeIndex);
+        }
+      });
+    }
+
+    if(this.animate && this.animate.playState !== 'finished') {
+      return;
+    }
+
+    const startOffset = calcOffsetByActive(activeIndex, Slides.length, this.props) + dragOffset;
+    const endOffset = calcOffsetByActive(nextIndex, Slides.length, this.props);
+    
+    this.animate = this.wrap.animate({
+      [animation !== 'vertical' ? 'marginLeft' : 'marginTop']: [
+        startOffset + 'px',
+        endOffset + 'px'
+      ]
+    }, {duration: speed, delay: 0, easing});
+    this.animate.onfinish = () => {
+      this.animate = undefined;
+      this.setState({activeIndex: nextActiveIndex, dragOffset: 0}, () => {
+        if(typeof onChange === 'function') {
+          onChange(this.state.activeIndex);
+        }
+      });
+    };
   }
 
-  const boxSize = {width: props.width, height: props.height};
-  const wrapHorizontalStyle = {
-    width: (props.infinite ? Slides.length + 2 : Slides.length) + '00%',
-    marginLeft: offset + '%'
-  };
-  const wrapVerticalStyle = {
-    height: (props.infinite ? Slides.length + 2 : Slides.length) + '00%',
-    marginTop: offset + '%'
-  };
-  return (
-    <div 
-      className={cls('unslider-container', props.className)} 
-      style={boxSize}
-      onMouseEnter={() => props.autoplay && pause()}
-      onMouseLeave={() => props.autoplay && play()}  
-    >
+  render() {
+    const {Slides, activeIndex, dragOffset} = this.state;
+    const {className, autoplay, animation, width, height, nav, arrow, loop, keys} = this.props;
+
+
+    const offset = calcOffsetByActive(activeIndex, Slides.length, this.props);
+    const wrapStyle = {
+      [animation !== 'vertical' ? 'width' : 'height']: (loop ? Slides.length + 2 : Slides.length) * width,
+      [animation !== 'vertical' ? 'marginLeft' : 'marginTop']: offset + dragOffset
+    };
+
+    const renderSlides = [...Slides];
+    if(loop) {
+      renderSlides.push(React.cloneElement(Slides[0], {key: 'first-clone'}));
+      renderSlides.unshift(React.cloneElement(Slides[Slides.length - 1], {key: 'last-clone'}));
+    }
+    return (
       <div 
-        className={cls('unslider-wrap', `unslider-${props.animation}`)}
-        ref={wrapRef}
-        style={props.animation === 'vertical' ? wrapVerticalStyle : wrapHorizontalStyle}
+        className={cls('unslider-container', className)} 
+        style={{width, height}}
+        onMouseEnter={() => autoplay && this.pauseAuto()}
+        onMouseLeave={() => autoplay && this.playAuto()}  
       >
-        {!props.infinite ? null : React.cloneElement(Slides[Slides.length - 1], {style: boxSize})}
-        {React.Children.map(Slides, slide => 
-          React.cloneElement(slide, {style: boxSize})
-        )}
-        {!props.infinite ? null : React.cloneElement(Slides[0], {style: boxSize})}
-      </div>
-
-      {!props.nav ? null : (
-        <Navs>
-          {Slides.map((slide, idx) => (
-            <Navs.Item 
-              key={idx} 
-              active={idx === activeIndex}
-              onClick={() => setActive(idx)}
-            >{slide.props.label}</Navs.Item>
-          ))}
-        </Navs>
-      )}
-
-      {!props.arrow ? null : (
-        <div className="unslider-arrows">
-          {!props.infinite && activeIndex === 0 ? null : (
-            <div className="unslider-arrow prev" onClick={prev}></div>
-          )}
-          {!props.infinite && activeIndex === Slides.length - 1 ? null : (
-            <div className="unslider-arrow next" onClick={next}></div>
+        <div 
+          className={cls('unslider-wrap', `unslider-${animation}`)}
+          ref={dom => this.wrap = dom}
+          style={wrapStyle}
+        >
+          {React.Children.map(renderSlides, slide => 
+            React.cloneElement(slide, {
+              style: {width, height},
+              onOffsetChange: delta => {
+                const {horizontal, vertical} = delta;
+                const {animation} = this.props;
+                this.setState({dragOffset: animation !== 'vertical' ? horizontal : vertical});
+              },
+              onChange: status => {
+                const {horizontal, vertical} = status;
+                const {activeIndex} = this.state;
+                const {animation} = this.props;
+                switch(animation !== 'vertical' ? horizontal : vertical) {
+                  case 1: 
+                    return this.setActiveIndex(activeIndex - 1);
+                  case -1:
+                    return this.setActiveIndex(activeIndex + 1);
+                  case 0:
+                  default:
+                    return this.setActiveIndex(activeIndex);
+                }
+              }
+            })  
           )}
         </div>
-      )}
-    </div>
-  );
-}
 
-Unslider.Item = function(props) {
-  return (
-    <div className="unslider-items" {...props} />
-  );
-}
+        {!nav ? null : (
+          <Navs>
+            {Slides.map((slide, idx) => (
+              <Navs.Item 
+                key={idx} 
+                active={idx === activeIndex}
+                onClick={() => this.setActiveIndex(idx)}
+              >{slide.props.label}</Navs.Item>
+            ))}
+          </Navs>
+        )}
 
-Unslider.defaultProps = {
-  width: 300,
-  height: 189,
-  autoplay: false,
-  loop: true,
-  delay: 3000,
-  speed: 750,
-  easing: 'linear', // [.42, 0, .58, 1],
-  keys: {
-    prev: 37,
-    next: 39
-  },
-  nav: true,
-  arrow: true,
-  animation: 'horizontal',
-  onChange(index) {
-    console.log(index);
+        {!arrow ? null : (
+          <Arrows>
+            <Arrows.Prev 
+              active={loop || activeIndex !== 0}
+              hotkey={keys && keys.prev} 
+              onClick={() => this.setActiveIndex(activeIndex - 1)} 
+            />
+            <Arrows.Next 
+              active={loop || activeIndex !== Slides.length - 1}
+              hotkey={keys && keys.next}
+              onClick={() => this.setActiveIndex(activeIndex + 1)}
+            />
+          </Arrows>
+        )}
+      </div>
+    );
   }
 }

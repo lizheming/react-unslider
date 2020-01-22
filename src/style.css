@@ -1,6 +1,6 @@
 /* base styles */
 .unslider-container {
-  overflow: auto;
+  overflow: hidden;
   margin: 0;
   padding: 0;
   position: relative;
@@ -64,7 +64,8 @@
   opacity: 0;
   transition: opacity .2s ease-out;
   position: absolute;
-  top: 119px;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 2;
   cursor: pointer;
   height: 52px;
@@ -80,11 +81,28 @@
 .unslider-arrow.next {
   right: 0px;
 }
+.unslider-arrow {
+  background-color: #22ac39
+}
+
+.unslider-arrow.prev {
+  background: url(https://p2.ssl.qhimg.com/t01a7b3919fe32d7767.png);
+  background-size: cover;
+  transform: rotate(0) translateY(-50%);
+}
+
+.unslider-arrow.next {
+  background: url(https://p4.ssl.qhimg.com/t01d002499ab8983ded.png);
+  background-size: cover
+}
 
 /* dots styles */
 .unslider-nav {
   position: absolute;
   bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
 }
 .unslider-nav ol {
   padding-top: 5px;
@@ -100,12 +118,12 @@
   border-radius: 5px;
   overflow: hidden;
   text-indent: -999em;
-  border: 2px solid #fff;
+  /* border: 2px solid #fff; */
   cursor: pointer;
   transition: width 1s;
 }
 .unslider-nav ol li.unslider-active {
-  background: #D43D3D;
+  background: #22ac39;
   cursor: pointer;
   width: 20px;
   transition: width 1s;
