@@ -14,6 +14,7 @@ export default class Unslider extends React.Component {
     width: 300,
     height: 189,
     spaceBetween: 0,
+    slidePerView: 1,
     autoplay: false,
     loop: true,
     delay: 3000,
@@ -136,14 +137,24 @@ export default class Unslider extends React.Component {
 
   render() {
     const {Slides, activeIndex, dragOffset} = this.state;
-    const {className, autoplay, animation, width, height, nav, arrow, loop, keys, spaceBetween} = this.props;
+    const {className, autoplay, animation, width, height, nav, arrow, loop, keys, spaceBetween, slidePerView} = this.props;
 
 
     const offset = calcOffsetByActive(activeIndex, Slides.length, this.props);
-    const wrapStyle = {
-      [animation !== 'vertical' ? 'width' : 'height']: (loop ? Slides.length + 2 : Slides.length) * (width + spaceBetween),
-      [animation !== 'vertical' ? 'marginLeft' : 'marginTop']: offset + dragOffset
-    };
+    const wrapStyle = {};
+    const slideStyle = {};
+    if(animation !== 'vertical') {
+      slideStyle.width = (width - (spaceBetween * Math.floor(slidePerView)))/slidePerView;
+      slideStyle.height = height;
+      slideStyle.marginRight = spaceBetween;
+      wrapStyle.width = (loop ? Slides.length + 2 : Slides.length) * (slideStyle.width + spaceBetween);
+      wrapStyle.marginLeft = offset + dragOffset;
+    } else {
+      slideStyle.width = width;
+      slideStyle.height = (height - (spaceBetween * Math.floor(slidePerView)))/slidePerView;
+      slideStyle.marginBottom = spaceBetween;
+      wrapStyle.height = (loop ? Slides.length + 2 : Slides.length) * (slideStyle.height + spaceBetween);
+    }
 
     const renderSlides = [...Slides];
     if(loop) {
@@ -164,10 +175,7 @@ export default class Unslider extends React.Component {
         >
           {React.Children.map(renderSlides, slide => 
             React.cloneElement(slide, {
-              style: {
-                width, height,
-                [animation === 'vertical' ? 'marginBottom' : 'marginRight']: spaceBetween
-              },
+              style: slideStyle,
               onOffsetChange: delta => {
                 const {horizontal, vertical} = delta;
                 const {animation} = this.props;
