@@ -18,7 +18,7 @@
     "build:lib": "webpack --config=build/webpack.component.config.js",
     "compile": "npm run build && npm run build:prod && npm run build:lib && npm run build:example",
     "clean": "rimraf lib dist umd/dist",
-    "prepublish": "npm run clean && npm run compile && npm run upload:qstatic"
+    "prepublish": "npm run clean && npm run compile"
   },
   "repository": {
     "type": "git",
