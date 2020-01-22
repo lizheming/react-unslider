@@ -29,7 +29,6 @@ export default class Unslider extends React.Component {
     animation: 'horizontal',
     defaultValue: 0,
     onChange(index) {
-      console.log(index);
     }
   }
 
