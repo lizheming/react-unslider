@@ -11,14 +11,12 @@ import './style.css';
 export default class Unslider extends React.Component {
   static Item = Item;
   static defaultProps = {
-    width: 300,
-    height: 189,
     spaceBetween: 0,
     slidePerView: 1,
     autoplay: false,
     loop: false,
     delay: 3000,
-    speed: 750,
+    speed: 300,
     easing: 'linear', // [.42, 0, .58, 1],
     keys: {
       prev: 37,
