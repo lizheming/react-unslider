@@ -1,4 +1,3 @@
-/* base styles */
 .unslider-container {
   overflow: hidden;
   margin: 0;
@@ -9,44 +8,14 @@
 .unslider-wrap {
   position: relative;
   overflow: hidden;
-  /* transition: all 1s; */
 }
 
-/* .unslider-wrap.unslider-carousel>li {
-  float: left;
-} */
 .unslider-wrap.unslider-horizontal {
   height: 100%;
 }
 .unslider-horizontal .unslider-items {
   float: left;
 }
-
-/* 
-.unslider-vertical>ul {
-  height: 100%;
-}
-
-.unslider-vertical li {
-  float: none;
-  width: 100%;
-}
-
-.unslider-fade {
-  position: relative;
-}
-
-.unslider-fade .unslider-wrap li {
-  position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  z-index: 8;
-}
-
-.unslider-fade .unslider-wrap li.unslider-active {
-  z-index: 10;
-} */
 
 .unslider-container li,.unslider-container ol,.unslider-container ul {
   list-style: none;
@@ -56,44 +25,39 @@
 }
 
 .unslider-container:hover .unslider-arrow {
-  opacity: 1;
+  /* opacity: 1; */
   transition: opacity .2s ease-in;
 }
 
 .unslider-arrow {
-  opacity: 0;
-  transition: opacity .2s ease-out;
+  /* opacity: 0; */
+  /* transition: opacity .2s ease-out; */
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
   z-index: 2;
   cursor: pointer;
-  height: 52px;
-  width: 30px;
+  height: 40px;
+  width: 22px;
   color: #fff;
 }
 
+.unslider-arrow.disabled {
+  opacity: 0.5;
+}
+
 .unslider-arrow.prev {
-  left: 0px;
-  transform: rotate(180deg);
+  left: 0;
+  background: url(https://p3.ssl.qhimg.com/t01b035615516ff4790.png);
+  background-size: cover;
+  transform: translateY(-50%);
 }
 
 .unslider-arrow.next {
   right: 0px;
-}
-.unslider-arrow {
-  background-color: #22ac39
-}
-
-.unslider-arrow.prev {
-  background: url(https://p2.ssl.qhimg.com/t01a7b3919fe32d7767.png);
+  background: url(https://p3.ssl.qhimg.com/t01b035615516ff4790.png);
   background-size: cover;
-  transform: rotate(0) translateY(-50%);
-}
-
-.unslider-arrow.next {
-  background: url(https://p4.ssl.qhimg.com/t01d002499ab8983ded.png);
-  background-size: cover
+  transform: translateY(-50%) rotate(180deg);
 }
 
 /* dots styles */
@@ -123,7 +87,7 @@
   transition: width 1s;
 }
 .unslider-nav ol li.unslider-active {
-  background: #22ac39;
+  background: #FA3939;
   cursor: pointer;
   width: 20px;
   transition: width 1s;

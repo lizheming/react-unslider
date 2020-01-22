@@ -2,7 +2,7 @@ import React, {useEffect} from 'react';
 import cls from 'classnames';
 
 function ArrowGenerator(actionName, defaultHotKey) {
-  return function({hotkey = defaultHotKey, onClick}) {
+  return function({hotkey = defaultHotKey, active, onClick}) {
     useEffect(() => {
       function handler(e) {
         if(e.which !== hotkey) {
@@ -15,7 +15,10 @@ function ArrowGenerator(actionName, defaultHotKey) {
     }, [onClick]);
     
     return (
-      <div className={cls('unslider-arrow', actionName)} onClick={onClick} />
+      <div 
+        className={cls('unslider-arrow', actionName, {disabled: !active})} 
+        onClick={onClick} 
+      />
     );
   }
 }

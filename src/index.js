@@ -16,7 +16,7 @@ export default class Unslider extends React.Component {
     spaceBetween: 0,
     slidePerView: 1,
     autoplay: false,
-    loop: true,
+    loop: false,
     delay: 3000,
     speed: 750,
     easing: 'linear', // [.42, 0, .58, 1],
@@ -24,8 +24,8 @@ export default class Unslider extends React.Component {
       prev: 37,
       next: 39
     },
-    nav: true,
-    arrow: true,
+    nav: false,
+    arrow: false,
     animation: 'horizontal',
     onChange(index) {
       console.log(index);
