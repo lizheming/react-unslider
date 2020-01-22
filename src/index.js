@@ -144,14 +144,22 @@ export default class Unslider extends React.Component {
     const wrapStyle = {};
     const slideStyle = {};
     if(animation !== 'vertical') {
-      slideStyle.width = (width - (spaceBetween * Math.floor(slidePerView)))/slidePerView;
+      if(slidePerView>1) {
+        slideStyle.width = (width - (spaceBetween * Math.floor(slidePerView)))/slidePerView;
+      } else {
+        slideStyle.width = width/slidePerView;
+      }
       slideStyle.height = height;
       slideStyle.marginRight = spaceBetween;
       wrapStyle.width = (loop ? Slides.length + 2 : Slides.length) * (slideStyle.width + spaceBetween);
       wrapStyle.marginLeft = offset + dragOffset;
     } else {
       slideStyle.width = width;
-      slideStyle.height = (height - (spaceBetween * Math.floor(slidePerView)))/slidePerView;
+      if(slidePerView>1) {
+        slideStyle.height = (height - (spaceBetween * Math.floor(slidePerView)))/slidePerView;
+      } else {
+        slideStyle.height = height/slidePerView;
+      }
       slideStyle.marginBottom = spaceBetween;
       wrapStyle.height = (loop ? Slides.length + 2 : Slides.length) * (slideStyle.height + spaceBetween);
     }

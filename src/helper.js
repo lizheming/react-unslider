@@ -6,7 +6,12 @@ export function calcOffsetByActive(activeIndex, length, {
   loop, 
   animation
 }) {
-  const base = ((animation === 'vertical' ? height : width) - (spaceBetween * Math.floor(slidePerView)))/slidePerView + spaceBetween;
+  let base = animation === 'vertical' ? height : width;
+  if(slidePerView > 1) {
+    base -= spaceBetween * Math.floor(slidePerView);
+  }
+  base = base / slidePerView + spaceBetween;
+  
   const max = 0;
   const min = (loop ? length + 1 : length - 1) * -base;
   let offset = (loop ? activeIndex + 1 : activeIndex) * -base;
