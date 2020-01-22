@@ -71,7 +71,7 @@ export default function Item(props) {
       window.removeEventListener('touchcancel', onMouseUp);
     };
   }, []);
-
+  
   return (
     <div 
       className="unslider-items" 

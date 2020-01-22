@@ -27,6 +27,7 @@ export default class Unslider extends React.Component {
     nav: false,
     arrow: false,
     animation: 'horizontal',
+    defaultValue: 0,
     onChange(index) {
       console.log(index);
     }
@@ -36,12 +37,12 @@ export default class Unslider extends React.Component {
   getInitialState(props = this.props) {
     const Slides = props.children.filter(child => child.type === Unslider.Item);
     
-    const defaultIndex = Slides.findIndex(slide => slide.props.defaultActive === true);
-    const activeIndex = Slides.findIndex(slide => slide.props.active === true);
+    const defaultIndex = props.defaultValue;
+    const activeIndex = props.value;
     let index = 0;
-    if(activeIndex !== -1) {
+    if(activeIndex !== undefined) {
       index = activeIndex;
-    } else if(defaultIndex !== -1) {
+    } else if(defaultIndex !== undefined) {
       index = defaultIndex;
     }
 
@@ -57,6 +58,12 @@ export default class Unslider extends React.Component {
     
     if(autoplay) {
       this.playAuto();
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if(nextProps.value !== undefined && this.state.activeIndex !== nextProps.value) {
+      this.setActiveIndex(nextProps.value);
     }
   }
   
@@ -190,6 +197,14 @@ export default class Unslider extends React.Component {
                 this.setState({dragOffset: animation !== 'vertical' ? horizontal : vertical});
               },
               onChange: status => {
+                const ctrlIndex = Slides.findIndex(slide => slide.props.active);
+                if(!status || ctrlIndex !== -1) {
+                  if(ctrlIndex !== -1) {
+                    this.setActiveIndex(ctrlIndex);
+                  }
+                  return;
+                }
+
                 const {horizontal, vertical} = status;
                 const {activeIndex} = this.state;
                 const {animation} = this.props;
