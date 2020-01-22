@@ -13,6 +13,7 @@ export default class Unslider extends React.Component {
   static defaultProps = {
     width: 300,
     height: 189,
+    spaceBetween: 0,
     autoplay: false,
     loop: true,
     delay: 3000,
@@ -135,12 +136,12 @@ export default class Unslider extends React.Component {
 
   render() {
     const {Slides, activeIndex, dragOffset} = this.state;
-    const {className, autoplay, animation, width, height, nav, arrow, loop, keys} = this.props;
+    const {className, autoplay, animation, width, height, nav, arrow, loop, keys, spaceBetween} = this.props;
 
 
     const offset = calcOffsetByActive(activeIndex, Slides.length, this.props);
     const wrapStyle = {
-      [animation !== 'vertical' ? 'width' : 'height']: (loop ? Slides.length + 2 : Slides.length) * width,
+      [animation !== 'vertical' ? 'width' : 'height']: (loop ? Slides.length + 2 : Slides.length) * (width + spaceBetween),
       [animation !== 'vertical' ? 'marginLeft' : 'marginTop']: offset + dragOffset
     };
 
@@ -163,7 +164,10 @@ export default class Unslider extends React.Component {
         >
           {React.Children.map(renderSlides, slide => 
             React.cloneElement(slide, {
-              style: {width, height},
+              style: {
+                width, height,
+                [animation === 'vertical' ? 'marginBottom' : 'marginRight']: spaceBetween
+              },
               onOffsetChange: delta => {
                 const {horizontal, vertical} = delta;
                 const {animation} = this.props;
