@@ -1,28 +1,95 @@
-import React, { useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import Unslider from '../src';
 
-function App() {
+const BuildComp = (props = {}) => (
+  <Unslider {...props} width={730} height={410}>
+    {new Array(10).fill(0).map((_, index) => (
+      <Unslider.Item key={index} label={index+1}>
+        Slider {index+1}
+      </Unslider.Item>
+    ))}
+  </Unslider>
+);
+
+function ControlledComp(props) {
+  const [idx, setIdx] = useState(1);
   return (
-    <Unslider 
-      width={300} 
-      height={189} 
-      autoplay={true} 
-      delay={3000}
-      loop={false}
-      speed={700}
-      nav={true}
-      arrow={true}
-      animation="horizontal"
-      spaceBetween={30}
-    >
-      {new Array(10).fill(0).map((_, index) => (
-        <Unslider.Item key={index} label={index+1}>
-          Slider {index+1}
-        </Unslider.Item>
-      ))}
-    </Unslider>
+    <>
+      <p>
+        <label>Change Active Slider Index: </label>
+        <input value={idx} onChange={e => setIdx(e.target.value)} />
+      </p>
+      <Unslider 
+        {...props} 
+        width={730} 
+        height={410} 
+        value={idx-1} 
+        onChange={idx => setIdx(idx+1)}
+      >
+        {new Array(10).fill(0).map((_, index) => (
+          <Unslider.Item 
+            key={index} 
+            label={index+1} 
+          >
+            Slider {index+1}
+          </Unslider.Item>
+        ))}
+      </Unslider>
+    </>
   );
+}
+
+const Examples = [
+  {
+    name: 'Default Setup',
+    comp: <BuildComp />
+  },
+  {
+    name: 'Navigation',
+    comp: <BuildComp arrow />
+  },
+  {
+    name: 'Pagination',
+    comp: <BuildComp nav />
+  },
+  {
+    name: 'Autoplay',
+    comp: <BuildComp nav autoplay />
+  },
+  {
+    name: 'Loop Mode / Infinite Loop',
+    comp: <BuildComp nav arrow autoplay loop />
+  },
+  {
+    name: 'Vertical Slider',
+    comp: <BuildComp animation="vertical" />
+  },
+  {
+    name: 'Space Between Slides',
+    comp: <BuildComp spaceBetween={30} nav />
+  },
+  {
+    name: 'Multiple Slides Per View',
+    comp: <BuildComp spaceBetween={30} slidePerView={3} nav />
+  },
+  {
+    name: 'Centered Slides',
+    comp: <BuildComp spaceBetween={30} slidePerView={1.5} nav={true} loop={true} />
+  },
+  {
+    name: 'Controlled Component',
+    comp: <ControlledComp nav loop/>
+  }
+];
+
+function App() {
+  return Examples.map(({name, comp}, k) => (
+    <div key={k}>
+      <h3>{name}</h3>
+      {comp}
+    </div>
+  ));
 }
 
 ReactDOM.render(<App />, document.getElementById('app'));
