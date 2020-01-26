@@ -1,8 +1,8 @@
 {
   "name": "react-unslider",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "react carousel component inspired by unslider.js",
-  "main": "index.js",
+  "main": "lib/index.js",
   "directories": {
     "example": "examples"
   },
@@ -16,10 +16,9 @@
     "build:prod": "webpack --mode=production --config=build/webpack.config.js",
     "build:example": "webpack --config=examples/webpack.config.js",
     "build:lib": "webpack --config=build/webpack.component.config.js",
-    "compile": "npm run build && npm run build:prod && npm run build:lib && npm run build:example && npm run build:umd",
-    "build:umd": "webpack --config=umd/webpack.config.js",
+    "compile": "npm run build && npm run build:prod && npm run build:lib && npm run build:example",
     "clean": "rimraf lib dist umd/dist",
-    "prepublish": "npm run clean && npm run compile && npm run upload:qstatic"
+    "prepublish": "npm run clean && npm run compile"
   },
   "repository": {
     "type": "git",

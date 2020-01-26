@@ -97,7 +97,7 @@ export default class Unslider extends React.Component {
     }
 
     const {loop, animation, speed, easing, onChange} = this.props;
-    let nextActiveIndex = nextIndex
+    let nextActiveIndex = nextIndex;
     if(loop) {
       if(nextIndex < 0) {
         nextActiveIndex = Slides.length - 1;
@@ -166,6 +166,7 @@ export default class Unslider extends React.Component {
       }
       slideStyle.marginBottom = spaceBetween;
       wrapStyle.height = (loop ? Slides.length + 2 : Slides.length) * (slideStyle.height + spaceBetween);
+      wrapStyle.marginTop = offset + dragOffset;
     }
 
     const renderSlides = [...Slides];
@@ -194,11 +195,9 @@ export default class Unslider extends React.Component {
                 this.setState({dragOffset: animation !== 'vertical' ? horizontal : vertical});
               },
               onChange: status => {
-                const ctrlIndex = Slides.findIndex(slide => slide.props.active);
-                if(!status || ctrlIndex !== -1) {
-                  if(ctrlIndex !== -1) {
+                const {value:ctrlIndex} = this.props;
+                if(!status || ctrlIndex !== undefined) {
                     this.setActiveIndex(ctrlIndex);
-                  }
                   return;
                 }
 
