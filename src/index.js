@@ -109,7 +109,7 @@ export default class Unslider extends React.Component {
     }
 
     if(!Element.prototype.animate || !this.wrap) {
-      this.setState({activeIndex: nextActiveIndex, dragOffset: 0}, () => {
+      return this.setState({activeIndex: nextActiveIndex, dragOffset: 0}, () => {
         if(typeof onChange === 'function') {
           onChange(this.state.activeIndex);
         }
