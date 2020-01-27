@@ -1,5 +1,10 @@
 import React, {useRef, useEffect} from 'react';
 
+const isMobile = () => 'ontouchstart' in document.documentElement;
+const START_EVENT = isMobile() ? 'touchstart' : 'mousedown';
+const MOVE_EVENT = isMobile() ? 'touchmove' : 'mousemove';
+const END_EVENT = isMobile() ? ['touchend', 'touchcancel'] : ['mouseup'];
+
 export default function Item(props) {
   const sliderRef = useRef(null);
 
@@ -14,18 +19,33 @@ export default function Item(props) {
     let startTime;
 
     function onMouseDown(e) {
-      start = {x: e.pageX, y: e.pageY};
+      if(!isMobile()) {
+        start = {x: e.pageX, y: e.pageY};
+      } else {
+        if(!e.touches.length) {
+          return;
+        }
+  
+        const {pageX, pageY} = e.touches[0];
+        start = {x: pageX, y: pageY};
+      }
+      
       startTime = Date.now();
-
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('touchmove', onMouseMove);
-      window.addEventListener('mouseup', onMouseUp);
-      window.addEventListener('touchend', onMouseUp);
-      window.addEventListener('touchcancel', onMouseUp);
+      window.addEventListener(MOVE_EVENT, onMouseMove);
+      END_EVENT.forEach(evt => window.addEventListener(evt, onMouseUp));
     }
 
     function onMouseMove(e) {
-      delta = {horizontal: e.pageX - start.x, vertical: e.pageY - start.y};
+      if(!isMobile()) {
+        delta = {horizontal: e.pageX - start.x, vertical: e.pageY - start.y};
+      } else {
+        if(!e.touches.length) {
+          return;
+        }
+
+        const {pageX, pageY} = e.touches[0];
+        delta = {horizontal: pageX - start.x, vertical: pageY - start.y};
+      }
       props.onOffsetChange(delta);
     }
 
@@ -58,23 +78,15 @@ export default function Item(props) {
 
       status = undefined;
       delta = undefined;
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('touchmove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      window.removeEventListener('touchend', onMouseUp);
-      window.removeEventListener('touchcancel', onMouseUp);
+      window.removeEventListener(MOVE_EVENT, onMouseMove);
+      END_EVENT.forEach(evt => window.removeEventListener(evt, onMouseUp));
     }
 
-    el.addEventListener('mousedown', onMouseDown);
-    el.addEventListener('touchstart', onMouseDown);
+    el.addEventListener(START_EVENT, onMouseDown);
     return () => {
-      el.removeEventListener('mousedown', onMouseDown);
-      el.addEventListener('touchstart', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('touchmove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      window.removeEventListener('touchend', onMouseUp);
-      window.removeEventListener('touchcancel', onMouseUp);
+      el.removeEventListener(START_EVENT, onMouseDown);
+      window.removeEventListener(MOVE_EVENT, onMouseMove);
+      END_EVENT.forEach(evt => window.removeEventListener(evt, onMouseUp));
     };
   }, []);
   
