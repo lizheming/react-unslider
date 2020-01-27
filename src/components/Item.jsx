@@ -36,6 +36,8 @@ export default function Item(props) {
     }
 
     function onMouseMove(e) {
+      e.preventDefault();
+
       if(!isMobile()) {
         delta = {horizontal: e.pageX - start.x, vertical: e.pageY - start.y};
       } else {
