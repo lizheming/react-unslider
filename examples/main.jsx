@@ -1,10 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import Unslider from '../src';
 
 const BuildComp = (props = {}) => (
   <Unslider {...props} width={730} height={410}>
-    {new Array(10).fill(0).map((_, index) => (
+    {[0,1,2,3,4,5,6,7,8,9].map((_, index) => (
       <Unslider.Item key={index} label={index+1}>
         Slider {index+1}
       </Unslider.Item>
@@ -27,7 +27,7 @@ function ControlledComp(props) {
         value={idx-1} 
         onChange={idx => setIdx(idx+1)}
       >
-        {new Array(10).fill(0).map((_, index) => (
+        {[0,1,2,3,4,5,6,7,8,9].map((_, index) => (
           <Unslider.Item 
             key={index} 
             label={index+1} 
