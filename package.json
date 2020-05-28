@@ -2,7 +2,7 @@
   "name": "react-unslider",
   "version": "1.0.0",
   "description": "react carousel component inspired by unslider.js",
-  "main": "lib/index.js",
+  "main": "lib/unslider.js",
   "directories": {
     "example": "examples"
   },
